@@ -1,16 +1,23 @@
 using UnityEngine;
 
-class TerrainObject : VoxelData
+class TerrainObject : VoxelObject
 {
-    public ComputeShader perlinGen;
+    public ComputeShader perlinNoise;
+
+    protected int m_genTerrainKernel;
 
     void Start()
     {
+        size = new Vector3Int(256, 256, 256);
         base.Start();
 
-        // perlinGen.SetBuffer(perlinGen.FindKernel( "PerlinMapGen" ), "MapVoxels", voxelData.voxels);
+        m_genTerrainKernel = perlinNoise.FindKernel("GenTerrain");
+        perlinNoise.SetBuffer(m_genTerrainKernel, "_size", m_sizeBuffer);
+        perlinNoise.SetBuffer(m_genTerrainKernel, "_offset", m_offsetBuffer);
+        perlinNoise.SetBuffer(m_genTerrainKernel, "_voxels", m_voxels);
+        perlinNoise.Dispatch(m_genTerrainKernel, size.x / 8, size.y / 8, size.z / 8);
 
-        uint[] terrainVoxels = new uint[size.x * size.y * size.z];
+        // uint[] terrainVoxels = new uint[size.x * size.y * size.z];
         // int size = 3;
 
         // for (int i=0; i<voxels.Length; i++) voxels[i] = 0;
@@ -23,16 +30,16 @@ class TerrainObject : VoxelData
         // MapVoxels.SetData( voxels );
         // MapHeights.SetData( heights );
 
-        for (int i = 0; i < size.x * size.y * size.z; i++)
-        {
-            int x = i % size.x;
-            int y = (i / size.x) % size.y;
-            int z = i / (size.x * size.y);
-            if (y < 10)
-            {
-                terrainVoxels[i] = 1;
-            }
-        }
-        m_voxels.SetData(terrainVoxels);
+        // for (int i = 0; i < size.x * size.y * size.z; i++)
+        // {
+        //     int x = i % size.x;
+        //     int y = (i / size.x) % size.y;
+        //     int z = i / (size.x * size.y);
+        //     if (y < 10)
+        //     {
+        //         terrainVoxels[i] = 1;
+        //     }
+        // }
+        // m_voxels.SetData(terrainVoxels);
     }
 }

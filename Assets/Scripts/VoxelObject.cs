@@ -1,17 +1,20 @@
 using UnityEngine;
 
-class VoxelData : MonoBehaviour
+class VoxelObject : MonoBehaviour
 {
     public enum VoxelType { SOLID, LIQUID }
-    public static Vector3Int size = new Vector3Int(256, 256, 256);
 
     public VoxelType type = VoxelType.SOLID;
     public Shader voxelShader;
-
     public ComputeShader voxelCulling;
+
+    public Vector3Int size = new Vector3Int(1, 1, 1);
+    public Vector3Int offset = new Vector3Int(0, 0, 0);
 
     protected ComputeBuffer m_voxels;
     protected ComputeBuffer m_voxelIndices;
+    protected ComputeBuffer m_sizeBuffer;
+    protected ComputeBuffer m_offsetBuffer;
     protected ComputeBuffer m_countBuffer;
 
     Material m_material;
@@ -21,7 +24,12 @@ class VoxelData : MonoBehaviour
     {
         m_voxels = new ComputeBuffer(size.x * size.y * size.z, sizeof(uint));
         m_voxelIndices = new ComputeBuffer(size.x * size.y * size.z, sizeof(uint), ComputeBufferType.Append);
+        m_sizeBuffer = new ComputeBuffer(3, sizeof(uint));
+        m_offsetBuffer = new ComputeBuffer(3, sizeof(uint));
         m_countBuffer = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Raw);
+
+        m_sizeBuffer.SetData(new int[] { size.x, size.y, size.z } );
+        m_offsetBuffer.SetData(new int[] { offset.x, offset.y, offset.z } );
 
         m_material = new Material(voxelShader);
         m_material.SetVector("_size", new Vector4(size.x, size.y, size.z, 0));
@@ -29,9 +37,9 @@ class VoxelData : MonoBehaviour
         m_material.SetBuffer("_voxelIndices", m_voxelIndices);
 
         m_genIndicesKernel = voxelCulling.FindKernel("GenIndices");
+        voxelCulling.SetBuffer(m_genIndicesKernel, "_size", m_sizeBuffer);
         voxelCulling.SetBuffer(m_genIndicesKernel, "_voxels", m_voxels);
         voxelCulling.SetBuffer(m_genIndicesKernel, "_voxelIndices", m_voxelIndices);
-        voxelCulling.SetVector("_size", new Vector4(size.x, size.y, size.z, 0));
     }
 
     void OnRenderObject()
@@ -42,7 +50,6 @@ class VoxelData : MonoBehaviour
         uint[] countData = new uint[1];
         m_countBuffer.GetData(countData);
         int visibleCount = (int)countData[0];
-        Debug.Log(visibleCount);
 
         m_material.SetPass(0);
         m_material.SetVector("_cameraPosition", Camera.main.transform.position);

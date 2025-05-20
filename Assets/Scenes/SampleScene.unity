@@ -169,7 +169,9 @@ MonoBehaviour:
   type: 0
   voxelShader: {fileID: 4800000, guid: 51f4dc6066cef2e45876494cf7c5955e, type: 3}
   voxelCulling: {fileID: 7200000, guid: 0e7898fc15f57d344b59a3f4725e7a80, type: 3}
-  perlinGen: {fileID: 7200000, guid: b3573a09675f26f459d42f52fcfbcc0b, type: 3}
+  size: {x: 1, y: 1, z: 1}
+  offset: {x: 0, y: 0, z: 0}
+  perlinNoise: {fileID: 7200000, guid: a2b1aff948089bf418523e58684e4cbf, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

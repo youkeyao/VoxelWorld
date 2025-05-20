@@ -66,24 +66,17 @@
                     return false;
                 }
                 uint idx = pos.x + pos.y * _size.x + pos.z * _size.x * _size.y;
-                uint voxelId = idx / 32;
-                uint voxelOffset = idx % 32;
-                return (_voxels[voxelId] >> voxelOffset) & 1u;
+                return _voxels[idx] > 0;
             }
 
             v2g vert(uint id : SV_VertexID)
             {
                 v2g o;
 
-                // id = _voxelIndices[id];
+                id = _voxelIndices[id];
                 uint x = id % _size.x;
                 uint y = (id / _size.x) % _size.y;
                 uint z = id / (_size.x * _size.y);
-                uint voxelId = id / 32;
-                uint voxelOffset = id % 32;
-
-                // bool isShow = (_voxels[voxelId] >> voxelOffset) & 1u;
-                // bool isShow = _voxels[id] > 0;
 
                 o.pos = float4(x, y, z, 1.0f);
                 o.color = _Color;
@@ -117,8 +110,8 @@
                 // 右，左
                 camSign = sign(_cameraPosition.x - pos.x);
                 shift = float4(-camSign, 1, -camSign, 1);
-                // if (!IsVoxelShow(id + int3(camSign, 0, 0)))
-                // {
+                if (!IsVoxelShow(id + int3(camSign, 0, 0)))
+                {
                     pIn1.pos = mul(UNITY_MATRIX_VP, pos + shift * float4(-halfS, -halfS, halfS, 0));
                     triStream.Append(pIn1);
 
@@ -132,13 +125,13 @@
                     triStream.Append(pIn4);
 
                     triStream.RestartStrip();
-                // }
+                }
 
                 // 上，下
                 camSign = sign(_cameraPosition.y - pos.y);
                 shift = float4(1, -camSign, -camSign, 1);
-                // if (!IsVoxelShow(id + int3(0, camSign, 0)))
-                // {
+                if (!IsVoxelShow(id + int3(0, camSign, 0)))
+                {
                     pIn1.pos = mul(UNITY_MATRIX_VP, pos + shift * float4(-halfS, -halfS, halfS, 0));
                     triStream.Append(pIn1);
 
@@ -152,13 +145,13 @@
                     triStream.Append(pIn4);
 
                     triStream.RestartStrip();
-                // }
+                }
 
                 // 前，后
                 camSign = sign(_cameraPosition.z - pos.z);
                 shift = float4(-camSign, 1, -camSign, 1);
-                // if (!IsVoxelShow(id + int3(0, 0, camSign)))
-                // {
+                if (!IsVoxelShow(id + int3(0, 0, camSign)))
+                {
                     pIn1.pos = mul(UNITY_MATRIX_VP, pos + shift * float4(-halfS, -halfS, -halfS, 0));
                     triStream.Append(pIn1);
 
@@ -172,7 +165,7 @@
                     triStream.Append(pIn4);
 
                     triStream.RestartStrip();
-                // }
+                }
             }
 
             float4 frag(g2f i) : COLOR
