@@ -1,7 +1,7 @@
 #pragma kernel GenTerrain
 
 StructuredBuffer<uint3> _size;
-StructuredBuffer<uint3> _offset;
+StructuredBuffer<int3> _offset;
 RWStructuredBuffer<uint> _voxels;
 
 float Perlin2D( float2 P )
@@ -42,7 +42,7 @@ float4 blend2 = float4( blend, float2( 1.0 - blend ));
 [numthreads(8,8,8)]
 void GenTerrain(uint3 id : SV_DispatchThreadID)
 {
-    uint3 idx = id + _offset[0];
+    int3 idx = id + _offset[0];
 
     float2 P = idx.xz;
     int height = (int)floor(Perlin2D(P / 200) * 30 + 30);

@@ -122,7 +122,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &314378177
+--- !u!1 &406165517
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -130,48 +130,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 314378180}
-  - component: {fileID: 314378181}
+  - component: {fileID: 406165519}
+  - component: {fileID: 406165518}
   m_Layer: 0
-  m_Name: Terrain
+  m_Name: WorldManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &314378180
+--- !u!114 &406165518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 406165517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d4746a34e200947be03cc0d941fa8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: {x: 256, y: 256, z: 256}
+  radius: 1
+  voxelCulling: {fileID: 7200000, guid: 0e7898fc15f57d344b59a3f4725e7a80, type: 3}
+  perlinNoise: {fileID: 7200000, guid: a2b1aff948089bf418523e58684e4cbf, type: 3}
+--- !u!4 &406165519
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 314378177}
+  m_GameObject: {fileID: 406165517}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 182.12679, y: 9.458666, z: 168.86613}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &314378181
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 314378177}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3301966ff5ea10b4e95960831e85e6fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  type: 0
-  voxelShader: {fileID: 4800000, guid: 51f4dc6066cef2e45876494cf7c5955e, type: 3}
-  voxelCulling: {fileID: 7200000, guid: 0e7898fc15f57d344b59a3f4725e7a80, type: 3}
-  size: {x: 1, y: 1, z: 1}
-  offset: {x: 0, y: 0, z: 0}
-  perlinNoise: {fileID: 7200000, guid: a2b1aff948089bf418523e58684e4cbf, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -344,7 +342,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 100, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

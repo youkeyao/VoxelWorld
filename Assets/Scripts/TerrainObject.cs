@@ -6,10 +6,14 @@ class TerrainObject : VoxelObject
 
     protected int m_genTerrainKernel;
 
-    void Start()
+    new void Start()
     {
-        size = new Vector3Int(256, 256, 256);
         base.Start();
+    }
+
+    public override void Init()
+    {
+        base.Init();
 
         m_genTerrainKernel = perlinNoise.FindKernel("GenTerrain");
         perlinNoise.SetBuffer(m_genTerrainKernel, "_size", m_sizeBuffer);

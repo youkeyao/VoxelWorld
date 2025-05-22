@@ -39,6 +39,7 @@
             float4 _Color6 = float4( 1, 1, 1, 1 );
 
             int3 _size;
+            int3 _offset;
             float4 _cameraPosition;
 
             matrix _worldMatrixTransform;
@@ -74,11 +75,11 @@
                 v2g o;
 
                 id = _voxelIndices[id];
-                uint x = id % _size.x;
-                uint y = (id / _size.x) % _size.y;
-                uint z = id / (_size.x * _size.y);
+                int x = id % _size.x;
+                int y = (id / _size.x) % _size.y;
+                int z = id / (_size.x * _size.y);
 
-                o.pos = float4(x, y, z, 1.0f);
+                o.pos = float4(x + _offset.x, y + _offset.y, z + _offset.z, 1.0f);
                 o.color = _Color;
                 o.id = int3(x, y, z);
 
