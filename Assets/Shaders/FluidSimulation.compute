@@ -1,0 +1,28 @@
+#pragma kernel GenFluid
+#pragma kernel ApplyForce
+
+float _dt;
+float4 _size;
+float4 _offset;
+
+RWStructuredBuffer<uint> _voxels;
+RWStructuredBuffer<float3> _velocities;
+
+[numthreads(8,8,8)]
+void GenFluid(uint3 id : SV_DispatchThreadID)
+{
+    if (200 < id.x && id.x < 220 && 200 < id.y && id.y < 220 && 200 < id.z && id.z < 220)
+    {
+        _voxels[id.x + id.y * _size.x + id.z * _size.x * _size.y] = 2;
+    }
+}
+
+[numthreads(8,8,8)]
+void ApplyForce(uint3 id : SV_DispatchThreadID)
+{
+    int idx = id.x + id.y * _size.x + id.z * _size.x * _size.y;
+    if (_voxels[idx] == 2)
+    {
+        _velocities[idx] += float3(0, -9.8, 0);
+    }
+}

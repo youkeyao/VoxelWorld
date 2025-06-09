@@ -1,63 +1,67 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class VoxelObject : MonoBehaviour
+public class Chunk
 {
-    public enum VoxelType { SOLID, LIQUID }
-
-    public VoxelType type = VoxelType.SOLID;
-    public ComputeShader voxelCulling;
-
+    public GameObject root;
     public Vector3Int size = new Vector3Int(1, 1, 1);
     public Vector3Int offset = new Vector3Int(0, 0, 0);
 
-    protected ComputeBuffer m_voxels;
+    public ComputeBuffer voxels;
+
     protected ComputeBuffer m_voxelIndices;
-    protected ComputeBuffer m_sizeBuffer;
-    protected ComputeBuffer m_offsetBuffer;
     protected ComputeBuffer m_countBuffer;
+
+    ComputeShader voxelCulling;
 
     Material m_material;
     int m_genIndicesKernel;
 
-    public void Start()
+
+    public Chunk(WorldManagr manager, Vector3Int offset)
     {
+        root = new GameObject("Chunk" + offset);
+        root.transform.position = new Vector3(offset.x * size.x, offset.y * size.y, offset.z * size.z);
+        this.size = manager.size;
+        this.offset = offset;
+        voxelCulling = manager.voxelCulling;
+
         Init();
     }
 
-    void OnDestroy()
+    ~Chunk()
     {
-        m_voxels.Release();
+        Clear();
+    }
+
+    public void Clear()
+    {
+        voxels.Release();
         m_voxelIndices.Release();
-        m_sizeBuffer.Release();
-        m_offsetBuffer.Release();
         m_countBuffer.Release();
     }
 
-    public virtual void Init()
+    public void Init()
     {
-        m_voxels = new ComputeBuffer(size.x * size.y * size.z, sizeof(uint));
+        voxels = new ComputeBuffer(size.x * size.y * size.z, sizeof(uint));
         m_voxelIndices = new ComputeBuffer(size.x * size.y * size.z, sizeof(uint), ComputeBufferType.Append);
-        m_sizeBuffer = new ComputeBuffer(3, sizeof(uint));
-        m_offsetBuffer = new ComputeBuffer(3, sizeof(uint));
         m_countBuffer = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Raw);
-
-        m_sizeBuffer.SetData(new int[] { size.x, size.y, size.z });
-        m_offsetBuffer.SetData(new int[] { offset.x, offset.y, offset.z });
 
         m_material = new Material(Shader.Find("VoxelWorld/VoxelShader"));
         m_material.SetVector("_size", new Vector4(size.x, size.y, size.z, 0));
         m_material.SetVector("_offset", new Vector4(offset.x, offset.y, offset.z, 0));
-        m_material.SetBuffer("_voxels", m_voxels);
+        m_material.SetBuffer("_voxels", voxels);
         m_material.SetBuffer("_voxelIndices", m_voxelIndices);
 
         m_genIndicesKernel = voxelCulling.FindKernel("GenIndices");
     }
 
-    void OnRenderObject()
+    public void OnRender()
     {
         m_voxelIndices.SetCounterValue(0);
-        voxelCulling.SetBuffer(m_genIndicesKernel, "_size", m_sizeBuffer);
-        voxelCulling.SetBuffer(m_genIndicesKernel, "_voxels", m_voxels);
+        voxelCulling.SetVector("_size", new Vector4(size.x, size.y, size.z, 0));
+        voxelCulling.SetBuffer(m_genIndicesKernel, "_voxels", voxels);
         voxelCulling.SetBuffer(m_genIndicesKernel, "_voxelIndices", m_voxelIndices);
         voxelCulling.Dispatch(m_genIndicesKernel, size.x / 8, size.y / 8, size.z / 8);
         ComputeBuffer.CopyCount(m_voxelIndices, m_countBuffer, 0);
@@ -67,11 +71,6 @@ public class VoxelObject : MonoBehaviour
 
         m_material.SetPass(0);
         m_material.SetVector("_cameraPosition", Camera.main.transform.position);
-        // m_material.SetVector( "_chunkPosition", transform.position );
-
-        // m_material.SetTexture( "_Sprite", sprite );
-        // m_material.SetVector("_size", size);
-        // m_material.SetMatrix("_worldMatrixTransform", transform.localToWorldMatrix);
 
         Graphics.DrawProceduralNow(MeshTopology.Points, visibleCount);
     }

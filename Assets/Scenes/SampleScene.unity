@@ -155,6 +155,7 @@ MonoBehaviour:
   radius: 1
   voxelCulling: {fileID: 7200000, guid: 0e7898fc15f57d344b59a3f4725e7a80, type: 3}
   perlinNoise: {fileID: 7200000, guid: a2b1aff948089bf418523e58684e4cbf, type: 3}
+  fluidSimulation: {fileID: 7200000, guid: 843cd4f9869e5264abccd8bf04e0b47b, type: 3}
 --- !u!4 &406165519
 Transform:
   m_ObjectHideFlags: 0

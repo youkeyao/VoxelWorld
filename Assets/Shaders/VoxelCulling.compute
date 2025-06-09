@@ -1,15 +1,16 @@
 #pragma kernel GenIndices
 
-StructuredBuffer<uint3> _size;
+float4 _size;
+
 StructuredBuffer<uint> _voxels;
 AppendStructuredBuffer<uint> _voxelIndices;
 
 bool IsVoxelShow(int3 pos) {
     if (pos.x < 0 || pos.y < 0 || pos.z < 0 ||
-        pos.x >= _size[0].x || pos.y >= _size[0].y || pos.z >= _size[0].z) {
+        pos.x >= _size.x || pos.y >= _size.y || pos.z >= _size.z) {
         return false;
     }
-    uint idx = pos.x + pos.y * _size[0].x + pos.z * _size[0].x * _size[0].y;
+    uint idx = pos.x + pos.y * _size.x + pos.z * _size.x * _size.y;
     return _voxels[idx] > 0;
 }
 
@@ -20,6 +21,6 @@ void GenIndices(int3 id : SV_DispatchThreadID)
         !IsVoxelShow(id + int3(0, 1, 0)) || !IsVoxelShow(id + int3(0, -1, 0)) || 
         !IsVoxelShow(id + int3(0, 0, 1)) || !IsVoxelShow(id + int3(0, 0, -1))))
     {
-        _voxelIndices.Append(id.x + id.y * _size[0].x + id.z * _size[0].x * _size[0].y);
+        _voxelIndices.Append(id.x + id.y * _size.x + id.z * _size.x * _size.y);
     }
 }

@@ -1,50 +1,51 @@
 #pragma kernel GenTerrain
 
-StructuredBuffer<uint3> _size;
-StructuredBuffer<int3> _offset;
+float4 _size;
+float4 _offset;
+
 RWStructuredBuffer<uint> _voxels;
 
 float Perlin2D( float2 P )
 {
-  P = P * 2 + float2( 5000, 5000 );
+    P = P * 2 + float2( 5000, 5000 );
 
-//  https://github.com/BrianSharpe/Wombat/blob/master/Perlin2D.glsl
+    //  https://github.com/BrianSharpe/Wombat/blob/master/Perlin2D.glsl
 
-// establish our grid cell and unit position
-float2 Pi = floor( P );
-float4 Pf_Pfmin1 = P.xyxy - float4( Pi, Pi + 1.0 );
+    // establish our grid cell and unit position
+    float2 Pi = floor( P );
+    float4 Pf_Pfmin1 = P.xyxy - float4( Pi, Pi + 1.0 );
 
-// calculate the hash
-float4 Pt = float4( Pi.xy, Pi.xy + 1.0 );
+    // calculate the hash
+    float4 Pt = float4( Pi.xy, Pi.xy + 1.0 );
 
-  Pt = Pt - floor(Pt * ( 1.0 / 71.0 )) * 71.0;
-  Pt += float2( 26.0, 161.0 ).xyxy;
-  Pt *= Pt;
-  Pt = Pt.xzxz * Pt.yyww;
+    Pt = Pt - floor(Pt * ( 1.0 / 71.0 )) * 71.0;
+    Pt += float2( 26.0, 161.0 ).xyxy;
+    Pt *= Pt;
+    Pt = Pt.xzxz * Pt.yyww;
 
-float4 hash_x = frac( Pt * ( 1.0 / 951.135664 ));
-float4 hash_y = frac( Pt * ( 1.0 / 642.949883 ));
+    float4 hash_x = frac( Pt * ( 1.0 / 951.135664 ));
+    float4 hash_y = frac( Pt * ( 1.0 / 642.949883 ));
 
-// calculate the gradient results
-float4 grad_x = hash_x - 0.49999;
-float4 grad_y = hash_y - 0.49999;
-float4 grad_results = rsqrt( grad_x * grad_x + grad_y * grad_y ) * ( grad_x * Pf_Pfmin1.xzxz + grad_y * Pf_Pfmin1.yyww );
+    // calculate the gradient results
+    float4 grad_x = hash_x - 0.49999;
+    float4 grad_y = hash_y - 0.49999;
+    float4 grad_results = rsqrt( grad_x * grad_x + grad_y * grad_y ) * ( grad_x * Pf_Pfmin1.xzxz + grad_y * Pf_Pfmin1.yyww );
 
-// Classic Perlin Interpolation
-grad_results *= 1.4142135623730950488016887242097;  // scale things to a strict -1.0->1.0 range  *= 1.0/sqrt(0.5)
+    // Classic Perlin Interpolation
+    grad_results *= 1.4142135623730950488016887242097;  // scale things to a strict -1.0->1.0 range  *= 1.0/sqrt(0.5)
 
-float2 blend = Pf_Pfmin1.xy * Pf_Pfmin1.xy * Pf_Pfmin1.xy * (Pf_Pfmin1.xy * (Pf_Pfmin1.xy * 6.0 - 15.0) + 10.0);
-float4 blend2 = float4( blend, float2( 1.0 - blend ));
+    float2 blend = Pf_Pfmin1.xy * Pf_Pfmin1.xy * Pf_Pfmin1.xy * (Pf_Pfmin1.xy * (Pf_Pfmin1.xy * 6.0 - 15.0) + 10.0);
+    float4 blend2 = float4( blend, float2( 1.0 - blend ));
 
-  return dot( grad_results, blend2.zxzx * blend2.wwyy );
+    return dot( grad_results, blend2.zxzx * blend2.wwyy );
 }
 
 [numthreads(8,8,8)]
 void GenTerrain(uint3 id : SV_DispatchThreadID)
 {
-    int3 idx = id + _offset[0];
+    int3 idx = id + int3(_offset.x, _offset.y, _offset.z);
 
     float2 P = idx.xz;
     int height = (int)floor(Perlin2D(P / 200) * 30 + 30);
-    _voxels[id.x + id.y * _size[0].x + id.z * _size[0].x * _size[0].y] = idx.y < height;
+    _voxels[id.x + id.y * _size.x + id.z * _size.x * _size.y] = idx.y < height;
 }
