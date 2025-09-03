@@ -46,18 +46,19 @@
 
             StructuredBuffer<uint> _voxels;
             StructuredBuffer<uint> _voxelIndices;
+            StructuredBuffer<float3> _velocities;
 
             struct g2f
             {
                 float4 pos : SV_POSITION;
-                float4 color : COLOR;
+                float3 color : COLOR;
                 float2 uv : TEXCOORD0;
             };
 
             struct v2g
             {
                 float4 pos : SV_POSITION;
-                float4 color : COLOR;
+                float3 color : COLOR;
                 int3 id : TEXCOORD1;
             };
 
@@ -80,7 +81,7 @@
                 int z = id / (_size.x * _size.y);
 
                 o.pos = float4(x + _offset.x, y + _offset.y, z + _offset.z, 1.0f);
-                o.color = _Color;
+                o.color = abs(_velocities[id]);
                 o.id = int3(x, y, z);
 
                 return o;
@@ -171,7 +172,8 @@
 
             float4 frag(g2f i) : COLOR
             {
-                return float4(i.uv.x, i.uv.y, 0, 1) * i.color;
+                return float4(i.uv, 0, 1);
+                // return float4(i.color, 1);
             }
 
             ENDCG

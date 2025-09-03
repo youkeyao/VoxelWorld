@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5d4746a34e200947be03cc0d941fa8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: {x: 256, y: 256, z: 256}
+  size: {x: 128, y: 64, z: 128}
   radius: 1
   voxelCulling: {fileID: 7200000, guid: 0e7898fc15f57d344b59a3f4725e7a80, type: 3}
   perlinNoise: {fileID: 7200000, guid: a2b1aff948089bf418523e58684e4cbf, type: 3}
@@ -342,14 +342,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 100, z: 0}
+  m_LocalRotation: {x: 0, y: 0.26723832, z: 0, w: 0.9636305}
+  m_LocalPosition: {x: 40, y: 60, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 31, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0

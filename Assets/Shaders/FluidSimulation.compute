@@ -1,28 +1,231 @@
 #pragma kernel GenFluid
+#pragma kernel Advection
 #pragma kernel ApplyForce
+#pragma kernel Divergence
+#pragma kernel PressureSolve
+#pragma kernel VelocityUpdate
+
+#define GRAVITY float3(0, -9.8, 0)
 
 float _dt;
 float4 _size;
 float4 _offset;
 
 RWStructuredBuffer<uint> _voxels;
+RWStructuredBuffer<float> _densities;
 RWStructuredBuffer<float3> _velocities;
+RWStructuredBuffer<float3> _velocitiesNew;
+RWStructuredBuffer<float> _divergence;
+RWStructuredBuffer<float> _pressure;
+RWStructuredBuffer<float> _pressureNew;
+
+int CalcIndex(uint3 id)
+{
+    return id.x + id.y * _size.x + id.z * _size.x * _size.y;
+}
+
+float TrilinearSample(float d000, float d001, float d010, float d011, float d100, float d101, float d110, float d111, float3 f)
+{
+    float w00 = lerp(d000, d100, f.x);
+    float w01 = lerp(d001, d101, f.x);
+    float w10 = lerp(d010, d110, f.x);
+    float w11 = lerp(d011, d111, f.x);
+    float w0 = lerp(w00, w10, f.y);
+    float w1 = lerp(w01, w11, f.y);
+    return lerp(w0, w1, f.z);
+}
+
+float3 SampleV(int3 idx)
+{
+    if (idx.x < 0 || _size.x <= idx.x || idx.y < 0 || _size.y <= idx.y || idx.z < 0 || _size.z <= idx.z)
+    {
+        return float3(0, 0, 0);
+    }
+    return _velocities[CalcIndex(idx)];
+}
 
 [numthreads(8,8,8)]
 void GenFluid(uint3 id : SV_DispatchThreadID)
 {
-    if (200 < id.x && id.x < 220 && 200 < id.y && id.y < 220 && 200 < id.z && id.z < 220)
+    if (50 < id.x && id.x < 60 && 50 < id.y && id.y < 60 && 50 < id.z && id.z < 60)
     {
-        _voxels[id.x + id.y * _size.x + id.z * _size.x * _size.y] = 2;
+        _voxels[CalcIndex(id)] = 2;
+    }
+}
+
+[numthreads(8,8,8)]
+void Advection(uint3 id : SV_DispatchThreadID)
+{
+    int idx = CalcIndex(id);
+    if (_voxels[idx] != 1)
+    {
+        float3 prevPos = float3(id.x, id.y, id.z) - _dt * _velocities[idx];
+        prevPos = clamp(prevPos, 0, _size - 1);
+
+        int3 prevPosI = int3(prevPos);
+        float vx = TrilinearSample(
+            SampleV(prevPosI).x,
+            SampleV(prevPosI + int3(0, 0, 1)).x,
+            SampleV(prevPosI + int3(0, 1, 0)).x,
+            SampleV(prevPosI + int3(0, 1, 1)).x,
+            SampleV(prevPosI + int3(1, 0, 0)).x,
+            SampleV(prevPosI + int3(1, 0, 1)).x,
+            SampleV(prevPosI + int3(1, 1, 0)).x,
+            SampleV(prevPosI + int3(1, 1, 1)).x,
+            prevPos - prevPosI
+        );
+        float vy = TrilinearSample(
+            SampleV(prevPosI).y,
+            SampleV(prevPosI + int3(0, 0, 1)).y,
+            SampleV(prevPosI + int3(0, 1, 0)).y,
+            SampleV(prevPosI + int3(0, 1, 1)).y,
+            SampleV(prevPosI + int3(1, 0, 0)).y,
+            SampleV(prevPosI + int3(1, 0, 1)).y,
+            SampleV(prevPosI + int3(1, 1, 0)).y,
+            SampleV(prevPosI + int3(1, 1, 1)).y,
+            prevPos - prevPosI
+        );
+        float vz = TrilinearSample(
+            SampleV(prevPosI).z,
+            SampleV(prevPosI + int3(0, 0, 1)).z,
+            SampleV(prevPosI + int3(0, 1, 0)).z,
+            SampleV(prevPosI + int3(0, 1, 1)).z,
+            SampleV(prevPosI + int3(1, 0, 0)).z,
+            SampleV(prevPosI + int3(1, 0, 1)).z,
+            SampleV(prevPosI + int3(1, 1, 0)).z,
+            SampleV(prevPosI + int3(1, 1, 1)).z,
+            prevPos - prevPosI
+        );
+        _velocitiesNew[idx] = float3(vx, vy, vz);
+        _densities[idx] = TrilinearSample(
+            _voxels[CalcIndex(prevPosI)] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(0, 0, 1))] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(0, 1, 0))] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(0, 1, 1))] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(1, 0, 0))] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(1, 0, 1))] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(1, 1, 0))] == 2 ? 1 : 0,
+            _voxels[CalcIndex(prevPosI + int3(1, 1, 1))] == 2 ? 1 : 0,
+            prevPos - prevPosI
+        );
+        // _densities[idx] = _voxels[CalcIndex(prevPosI)];
     }
 }
 
 [numthreads(8,8,8)]
 void ApplyForce(uint3 id : SV_DispatchThreadID)
 {
-    int idx = id.x + id.y * _size.x + id.z * _size.x * _size.y;
+    int idx = CalcIndex(id);
+    if (_voxels[idx] != 1)
+    {
+    _voxels[idx] = _densities[idx] > 0.3 ? 2 : 0;
+    }
+    // if (_voxels[idx] == 1)
+    //     _voxels[idx] = 0;
     if (_voxels[idx] == 2)
     {
-        _velocities[idx] += float3(0, -9.8, 0);
+        _velocities[idx] += _dt * GRAVITY;
     }
+
+    // if (50 < id.x && id.x < 60 && 50 < id.y && id.y < 60 && 50 < id.z && id.z < 60)
+    // {
+    //     _voxels[idx] = 2;
+    //     _velocities[idx] = float3(0, -50, 0);
+    // }
+}
+
+[numthreads(8,8,8)]
+void Divergence(uint3 id : SV_DispatchThreadID)
+{
+    int idx = CalcIndex(id);
+    // if (_voxels[idx] != 1)
+    // {
+        float3 inV = float3(0, 0, 0), outV = float3(0, 0, 0);
+        float3 nowV = _velocities[idx];
+        if (id.x == 0 || _voxels[CalcIndex(id - int3(1, 0, 0))] == 1)
+        {
+            outV.x = -nowV.x;
+        }
+        else
+        {
+            outV.x = SampleV(id - int3(1, 0, 0)).x;
+        }
+        if (id.y == 0 || _voxels[CalcIndex(id - int3(0, 1, 0))] == 1)
+        {
+            outV.y = -nowV.y;
+        }
+        else
+        {
+            outV.y = SampleV(id - int3(0, 1, 0)).y;
+        }
+        if (id.z == 0 || _voxels[CalcIndex(id - int3(0, 0, 1))] == 1)
+        {
+            outV.z = -nowV.z;
+        }
+        else
+        {
+            outV.z = SampleV(id - int3(0, 0, 1)).z;
+        }
+        if (id.x == _size.x - 1 || _voxels[CalcIndex(id + int3(1, 0, 0))] == 1)
+        {
+            inV.x = -nowV.x;
+        }
+        else
+        {
+            inV.x = SampleV(id + int3(1, 0, 0)).x;
+        }
+        if (id.y == _size.y - 1 || _voxels[CalcIndex(id + int3(0, 1, 0))] == 1)
+        {
+            inV.y = -nowV.y;
+        }
+        else
+        {
+            inV.y = SampleV(id + int3(0, 1, 0)).y;
+        }
+        if (id.z == _size.z - 1 || _voxels[CalcIndex(id + int3(0, 0, 1))] == 1)
+        {
+            inV.z = -nowV.z;
+        }
+        else
+        {
+            inV.z = SampleV(id + int3(0, 0, 1)).z;
+        }
+        _divergence[idx] = (inV.x - outV.x + inV.y - outV.y + inV.z - outV.z) / 2;
+    // }
+}
+
+[numthreads(8,8,8)]
+void PressureSolve(uint3 id : SV_DispatchThreadID)
+{
+    int x = id.x, y = id.y, z = id.z;
+    int idx = CalcIndex(id);
+    float pL = _pressure[CalcIndex(int3(max(x-1, 0), y, z))];
+    float pR = _pressure[CalcIndex(int3(min(x+1, _size.x-1), y, z))];
+    float pD = _pressure[CalcIndex(int3(x, max(y-1, 0), z))];
+    float pU = _pressure[CalcIndex(int3(x, min(y+1, _size.y-1), z))];
+    float pB = _pressure[CalcIndex(int3(x, y, max(z-1, 0)))];
+    float pF = _pressure[CalcIndex(int3(x, y, min(z+1, _size.z-1)))];
+
+    float b = _divergence[idx];
+    _pressureNew[idx] = (pL + pR + pD + pU + pB + pF - b) / 6.0;
+}
+
+[numthreads(8,8,8)]
+void VelocityUpdate(uint3 id : SV_DispatchThreadID)
+{
+    int x = id.x, y = id.y, z = id.z;
+    int idx = CalcIndex(id);
+    float pL = _pressure[CalcIndex(int3(max(x-1, 0), y, z))];
+    float pR = _pressure[CalcIndex(int3(min(x+1, _size.x-1), y, z))];
+    float pD = _pressure[CalcIndex(int3(x, max(y-1, 0), z))];
+    float pU = _pressure[CalcIndex(int3(x, min(y+1, _size.y-1), z))];
+    float pB = _pressure[CalcIndex(int3(x, y, max(z-1, 0)))];
+    float pF = _pressure[CalcIndex(int3(x, y, min(z+1, _size.z-1)))];
+
+    float3 grad;
+    grad.x = (pR - pL) * 0.5;
+    grad.y = (pU - pD) * 0.5;
+    grad.z = (pF - pB) * 0.5;
+
+    _velocities[idx] -= grad;
 }

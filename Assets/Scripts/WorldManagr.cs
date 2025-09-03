@@ -53,17 +53,19 @@ public class WorldManagr : MonoBehaviour
             SetChunkState(nowChunkId, true);
             m_lastChunkId = nowChunkId;
         }
+
+        OnSimulate();
     }
 
     void SetChunkState(Vector3Int chunkId, bool state)
     {
         for (int x = -radius; x <= radius; x++)
         {
-            for (int y = -radius; y <= radius; y++)
-            {
+            // for (int y = -radius; y <= radius; y++)
+            // {
                 for (int z = -radius; z <= radius; z++)
                 {
-                    Vector3Int chunkCoord = new Vector3Int(chunkId.x + x, chunkId.y + y, chunkId.z + z);
+                    Vector3Int chunkCoord = new Vector3Int(chunkId.x + x, 0, chunkId.z + z);
                     if (!m_chunks.ContainsKey(chunkCoord))
                     {
                         Chunk chunk = new Chunk(this, chunkCoord * size);
@@ -74,7 +76,7 @@ public class WorldManagr : MonoBehaviour
                     }
                     m_chunks[chunkCoord].root.SetActive(state);
                 }
-            }
+            // }
         }
     }
 
@@ -94,24 +96,35 @@ public class WorldManagr : MonoBehaviour
         fluidSimulation.Dispatch(m_genFluidKernel, size.x / 8, size.y / 8, size.z / 8);
     }
 
-    void OnSim()
+    void OnSimulate()
     {
-        fluidSimulation.SetFloat("_dt", Time.deltaTime);
+        for (int x = -radius; x <= radius; x++)
+        {
+            // for (int y = -radius; y <= radius; y++)
+            // {
+                for (int z = -radius; z <= radius; z++)
+                {
+                    Vector3Int chunkCoord = new Vector3Int(m_lastChunkId.x + x, 0, m_lastChunkId.z + z);
+                    if (m_chunks[chunkCoord].root.activeSelf)
+                        m_chunks[chunkCoord].OnSimulate();
+                }
+            // }
+        }
     }
 
     void OnRenderObject()
     {
         for (int x = -radius; x <= radius; x++)
         {
-            for (int y = -radius; y <= radius; y++)
-            {
+            // for (int y = -radius; y <= radius; y++)
+            // {
                 for (int z = -radius; z <= radius; z++)
                 {
-                    Vector3Int chunkCoord = new Vector3Int(m_lastChunkId.x + x, m_lastChunkId.y + y, m_lastChunkId.z + z);
+                    Vector3Int chunkCoord = new Vector3Int(m_lastChunkId.x + x, 0, m_lastChunkId.z + z);
                     if (m_chunks[chunkCoord].root.activeSelf)
                         m_chunks[chunkCoord].OnRender();
                 }
-            }
+            // }
         }
     }
 }
